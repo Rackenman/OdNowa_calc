@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #4A6B82;
+  --color-brand-blue-dark: #2C3E50;
+  --color-brand-blue-deeper: #1E2A34;
+  --color-brand-blue-light: #EBF1F5;
+  --color-brand-mint: #A3C1AD;
+  --color-brand-mint-dark: #6E947A;
+  --color-brand-mint-light: #F0F6F2;
+  --color-brand-yellow: #F4D03F;
+  --color-brand-yellow-dark: #D4B020;
+  --color-brand-yellow-light: #FFFDF0;
+}
+
+/* Custom crisp slider accents */
+input[type="range"].accent-brand-blue {
+  accent-color: #4A6B82;
+}
+input[type="range"].accent-brand-mint {
+  accent-color: #6E947A;
+}
+input[type="range"].accent-brand-yellow {
+  accent-color: #D4B020;
+}
+
+/* Social Concentration Logo Styles & One-Time Animation */
+.social-concentration-logo {
+  display: block;
+  width: 72px;
+  height: auto;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.social-logo-rays,
+.social-logo-sun,
+.social-logo-indicators,
+.social-logo-layers,
+.social-logo-data {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (max-width: 640px) {
+  .social-concentration-logo {
+    width: 58px;
+  }
+}
+
+@keyframes socialLogoLayersIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes socialLogoIndicatorsIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.35);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes socialLogoSunIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes socialLogoRaysIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.social-logo-layers {
+  animation: socialLogoLayersIn 420ms ease-out both;
+}
+
+.social-logo-data {
+  animation: socialLogoIndicatorsIn 420ms ease-out 160ms both;
+}
+
+.social-logo-indicators {
+  animation: socialLogoIndicatorsIn 420ms ease-out 260ms both;
+}
+
+.social-logo-sun {
+  animation: socialLogoSunIn 500ms ease-out 330ms both;
+}
+
+.social-logo-rays {
+  animation: socialLogoRaysIn 350ms ease-out 560ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-logo-layers,
+  .social-logo-data,
+  .social-logo-indicators,
+  .social-logo-sun,
+  .social-logo-rays {
+    animation: none;
+  }
+}

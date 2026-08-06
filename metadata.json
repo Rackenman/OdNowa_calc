@@ -1,0 +1,6 @@
+{
+  "name": "Symulator koncentracji problemów społecznych",
+  "description": "Interaktywny symulator modelu koncentracji problemów społecznych (Wskaźnik Ks)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
