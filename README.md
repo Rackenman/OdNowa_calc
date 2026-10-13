@@ -1,20 +1,45 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Symulator koncentracji problemów społecznych
 
-# Run and deploy your AI Studio app
+Edukacyjny symulator porównujący trzy modele łączenia pięciu wskaźników problemów społecznych. Pozwala zmieniać wartości wskaźników i obserwować obliczony wynik oraz udział poszczególnych problemów.
 
-This contains everything you need to run your app locally.
+To niezależne narzędzie edukacyjne, a nie oficjalny system urzędowy ani diagnoza obszaru zdegradowanego.
 
-View your app in AI Studio: https://ai.studio/apps/96481603-b9e4-42d7-a905-d87165006495
+## Wymagania
 
-## Run Locally
+- Node.js 18 lub nowszy
+- Bun 1.0 lub nowszy
 
-**Prerequisites:**  Node.js
+## Uruchomienie lokalne
 
+```sh
+bun install
+bun run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Vite wyświetli adres lokalnego serwera w terminalu.
+
+## Architektura
+
+`src/App.tsx` składa nagłówek i kalkulator. Interfejs oraz stan suwaków znajdują się w `src/components/DeprivationCalculator.tsx`, czysta funkcja wyniku w `src/data/calculateSyntheticScore.js`, a wagi modeli i wartości przykładowe w `src/data/examplePresets.ts`.
+
+## Sprawdzenie i build produkcyjny
+
+```sh
+bun run typecheck
+npm test
+bun run build
+```
+
+Build tworzy statyczne pliki w `dist/`; zawartość tego katalogu można opublikować na hostingu plików statycznych, bez serwera aplikacji. Dla wdrożenia w podkatalogu ustaw bazową ścieżkę podczas budowania, na przykład:
+
+```sh
+npm run build -- --base=/podkatalog/
+```
+
+Podgląd buildu produkcyjnego:
+
+```sh
+bun run preview
+```
+
+Repozytorium zawiera `bun.lock`, dlatego Bun jest preferowanym menedżerem pakietów. `package-lock.json` pozostaje dla użytkowników npm; nie należy mieszać instalacji zależności bez aktualizowania właściwego lockfile.

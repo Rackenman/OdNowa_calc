@@ -13,6 +13,11 @@
   --color-brand-yellow-light: #FFFDF0;
 }
 
+:focus-visible {
+  outline: 3px solid #F4D03F;
+  outline-offset: 3px;
+}
+
 /* Custom crisp slider accents */
 input[type="range"].accent-brand-blue {
   accent-color: #4A6B82;

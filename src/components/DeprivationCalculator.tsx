@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Info, 
   ChevronDown, 
@@ -15,6 +15,7 @@ import {
   CalculationModel,
   CityModel 
 } from '../data/examplePresets';
+import { calculateSyntheticScore } from '../data/calculateSyntheticScore.js';
 import { CircularScoreGauge, MiniCircularRing } from './CircularGauge';
 
 export const DeprivationCalculator: React.FC = () => {
@@ -33,6 +34,7 @@ export const DeprivationCalculator: React.FC = () => {
 
   // Active Tooltip popover
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Collapsible Methodology
   const [isMethodologyOpen, setIsMethodologyOpen] = useState<boolean>(false);
@@ -71,8 +73,14 @@ export const DeprivationCalculator: React.FC = () => {
   const wContrib = wycofanieW * activeWeights.w;
 
   const baseKs = useMemo(() => {
-    return uContrib + bContrib + pContrib + eContrib + wContrib;
-  }, [uContrib, bContrib, pContrib, eContrib, wContrib]);
+    return calculateSyntheticScore({
+      u: ubostwoU,
+      b: bezrobocieB,
+      p: przestepczoscP,
+      e: edukacjaE,
+      w: wycofanieW,
+    }, activeWeights);
+  }, [ubostwoU, bezrobocieB, przestepczoscP, edukacjaE, wycofanieW, activeWeights]);
 
   // Top 3 Contributors to Score
   const topContributors = useMemo(() => {
@@ -111,6 +119,47 @@ export const DeprivationCalculator: React.FC = () => {
   const formatVal = (num: number) => num.toFixed(2).replace('.', ',');
 
   const detailCity: CityModel | null = activeDetailCityId ? cityModels[activeDetailCityId] : null;
+
+  useEffect(() => {
+    if (!detailCity) return;
+
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const previouslyFocusedElement = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const getFocusableElements = (): HTMLElement[] => Array.from(dialog.querySelectorAll(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )) as HTMLElement[];
+    const focusableElements = getFocusableElements();
+    focusableElements[0]?.focus();
+
+    const handleTabKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+
+      const elements = getFocusableElements();
+      const firstElement = elements[0];
+      const lastElement = elements[elements.length - 1];
+
+      if (!firstElement || !lastElement) {
+        event.preventDefault();
+        dialog.focus();
+      } else if (event.shiftKey && (document.activeElement === firstElement || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (document.activeElement === lastElement || !dialog.contains(document.activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleTabKeyDown);
+      if (previouslyFocusedElement?.isConnected) previouslyFocusedElement.focus();
+    };
+  }, [detailCity]);
 
   return (
     <div className="space-y-8">
@@ -362,6 +411,9 @@ export const DeprivationCalculator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleTooltip('u')}
+                    aria-expanded={activeTooltip === 'u'}
+                    aria-controls={activeTooltip === 'u' ? 'tooltip-u' : undefined}
+                    aria-describedby={activeTooltip === 'u' ? 'tooltip-u' : undefined}
                     aria-label="Więcej informacji o wskaźniku U"
                     className="text-slate-400 hover:text-[#4A6B82] transition-colors p-0.5 cursor-pointer"
                   >
@@ -374,7 +426,7 @@ export const DeprivationCalculator: React.FC = () => {
               </div>
 
               {activeTooltip === 'u' && (
-                <div className="p-2 bg-[#FFFDF0] border border-[#F4D03F] rounded-none text-xs text-slate-800 leading-relaxed">
+                <div id="tooltip-u" role="tooltip" className="p-2 bg-[#FFFDF0] border border-[#F4D03F] rounded-none text-xs text-slate-800 leading-relaxed">
                   Pokazuje, jak często mieszkańcy danego obszaru korzystają między innymi z pomocy społecznej lub dofinansowania posiłków.
                 </div>
               )}
@@ -415,6 +467,9 @@ export const DeprivationCalculator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleTooltip('b')}
+                    aria-expanded={activeTooltip === 'b'}
+                    aria-controls={activeTooltip === 'b' ? 'tooltip-b' : undefined}
+                    aria-describedby={activeTooltip === 'b' ? 'tooltip-b' : undefined}
                     aria-label="Więcej informacji o wskaźniku B"
                     className="text-slate-400 hover:text-[#4A6B82] transition-colors p-0.5 cursor-pointer"
                   >
@@ -427,7 +482,7 @@ export const DeprivationCalculator: React.FC = () => {
               </div>
 
               {activeTooltip === 'b' && (
-                <div className="p-2 bg-[#EBF1F5] border border-[#4A6B82] rounded-none text-xs text-slate-900 leading-relaxed">
+                <div id="tooltip-b" role="tooltip" className="p-2 bg-[#EBF1F5] border border-[#4A6B82] rounded-none text-xs text-slate-900 leading-relaxed">
                   Pokazuje, jak wiele osób nie ma pracy, szczególnie przez długi czas.
                 </div>
               )}
@@ -468,6 +523,9 @@ export const DeprivationCalculator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleTooltip('p')}
+                    aria-expanded={activeTooltip === 'p'}
+                    aria-controls={activeTooltip === 'p' ? 'tooltip-p' : undefined}
+                    aria-describedby={activeTooltip === 'p' ? 'tooltip-p' : undefined}
                     aria-label="Więcej informacji o wskaźniku P"
                     className="text-slate-400 hover:text-[#4A6B82] transition-colors p-0.5 cursor-pointer"
                   >
@@ -480,7 +538,7 @@ export const DeprivationCalculator: React.FC = () => {
               </div>
 
               {activeTooltip === 'p' && (
-                <div className="p-2 bg-[#F0F6F2] border border-[#A3C1AD] rounded-none text-xs text-slate-900 leading-relaxed">
+                <div id="tooltip-p" role="tooltip" className="p-2 bg-[#F0F6F2] border border-[#A3C1AD] rounded-none text-xs text-slate-900 leading-relaxed">
                   Może uwzględniać między innymi wykroczenia, interwencje służb oraz Niebieskie Karty.
                 </div>
               )}
@@ -521,6 +579,9 @@ export const DeprivationCalculator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleTooltip('e')}
+                    aria-expanded={activeTooltip === 'e'}
+                    aria-controls={activeTooltip === 'e' ? 'tooltip-e' : undefined}
+                    aria-describedby={activeTooltip === 'e' ? 'tooltip-e' : undefined}
                     aria-label="Więcej informacji o wskaźniku E"
                     className="text-slate-400 hover:text-[#4A6B82] transition-colors p-0.5 cursor-pointer"
                   >
@@ -533,7 +594,7 @@ export const DeprivationCalculator: React.FC = () => {
               </div>
 
               {activeTooltip === 'e' && (
-                <div className="p-2 bg-slate-100 border border-slate-300 rounded-none text-xs text-slate-900 leading-relaxed">
+                <div id="tooltip-e" role="tooltip" className="p-2 bg-slate-100 border border-slate-300 rounded-none text-xs text-slate-900 leading-relaxed">
                   Pokazuje między innymi, czy wyniki egzaminów uczniów są niższe niż w innych częściach gminy.
                 </div>
               )}
@@ -574,6 +635,9 @@ export const DeprivationCalculator: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleTooltip('w')}
+                    aria-expanded={activeTooltip === 'w'}
+                    aria-controls={activeTooltip === 'w' ? 'tooltip-w' : undefined}
+                    aria-describedby={activeTooltip === 'w' ? 'tooltip-w' : undefined}
                     aria-label="Więcej informacji o wskaźniku W"
                     className="text-slate-400 hover:text-[#4A6B82] transition-colors p-0.5 cursor-pointer"
                   >
@@ -586,7 +650,7 @@ export const DeprivationCalculator: React.FC = () => {
               </div>
 
               {activeTooltip === 'w' && (
-                <div className="p-2 bg-[#FFFDF0] border border-[#F4D03F] rounded-none text-xs text-slate-800 leading-relaxed">
+                <div id="tooltip-w" role="tooltip" className="p-2 bg-[#FFFDF0] border border-[#F4D03F] rounded-none text-xs text-slate-800 leading-relaxed">
                   W dokumentach źródłowych określany jako wycofanie społeczne lub niewystarczające uczestnictwo w życiu publicznym i kulturalnym.
                 </div>
               )}
@@ -627,7 +691,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </span>
 
                 {/* Main Score Display formatted as e.g. "4,10 na 10" */}
-                <div className="py-2 space-y-1">
+                <div className="py-2 space-y-1" role="status" aria-label="Aktualny syntetyczny wskaźnik Ks" aria-live="polite" aria-atomic="true">
                   <div className="text-4xl font-black font-mono text-white tracking-tight">
                     {formatVal(baseKs)} na 10
                   </div>
@@ -724,6 +788,8 @@ export const DeprivationCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsMethodologyOpen(!isMethodologyOpen)}
+              aria-expanded={isMethodologyOpen}
+              aria-controls={isMethodologyOpen ? 'methodology-content' : undefined}
               className="text-xs font-bold text-[#4A6B82] hover:text-[#2C3E50] flex items-center gap-1 cursor-pointer transition-colors bg-[#EBF1F5] px-3 py-1.5 border border-[#4A6B82]/30"
             >
               <span>{isMethodologyOpen ? 'Zwiń sekcję' : 'Rozwiń sekcję'}</span>
@@ -732,7 +798,7 @@ export const DeprivationCalculator: React.FC = () => {
           </div>
 
           {isMethodologyOpen && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div id="methodology-content" className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               {/* Card 1: Wołomin / Włocławek */}
               <div className="bg-slate-50 p-4 border border-slate-200 rounded-none space-y-3 flex flex-col justify-between">
                 <div className="space-y-2">
@@ -840,6 +906,8 @@ export const DeprivationCalculator: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsFaqSectionOpen(!isFaqSectionOpen)}
+              aria-expanded={isFaqSectionOpen}
+              aria-controls={isFaqSectionOpen ? 'faq-content' : undefined}
               className="text-xs font-bold text-[#4A6B82] hover:text-[#2C3E50] flex items-center gap-1 cursor-pointer transition-colors bg-[#EBF1F5] px-3 py-1.5 border border-[#4A6B82]/30"
             >
               <span>{isFaqSectionOpen ? 'Zwiń sekcję' : 'Rozwiń sekcję'}</span>
@@ -848,12 +916,14 @@ export const DeprivationCalculator: React.FC = () => {
           </div>
 
           {isFaqSectionOpen && (
-            <div className="space-y-3 pt-2">
+            <div id="faq-content" className="space-y-3 pt-2">
               {/* FAQ 1: CO TO JEST? */}
               <div className="border border-slate-200 rounded-none overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setOpenFaqWhatIs(!openFaqWhatIs)}
+                  aria-expanded={openFaqWhatIs}
+                  aria-controls={openFaqWhatIs ? 'faq-what-is' : undefined}
                   className="w-full p-4 text-left font-extrabold text-slate-900 text-sm flex items-center justify-between bg-[#EBF1F5]/60 hover:bg-[#EBF1F5] transition-colors cursor-pointer"
                 >
                   <span>CO TO JEST?</span>
@@ -861,7 +931,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </button>
                 
                 {openFaqWhatIs && (
-                  <div className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
+                  <div id="faq-what-is" className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
                     Wskaźnik Ks łączy pięć grup problemów społecznych w jeden wynik. Pozwala zobaczyć, jak jednoczesne występowanie różnych problemów może wpływać na ocenę badanego obszaru.
                   </div>
                 )}
@@ -872,6 +942,8 @@ export const DeprivationCalculator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenFaqHowToUse(!openFaqHowToUse)}
+                  aria-expanded={openFaqHowToUse}
+                  aria-controls={openFaqHowToUse ? 'faq-how-to-use' : undefined}
                   className="w-full p-4 text-left font-extrabold text-slate-900 text-sm flex items-center justify-between bg-[#EBF1F5]/60 hover:bg-[#EBF1F5] transition-colors cursor-pointer"
                 >
                   <span>JAK KORZYSTAĆ?</span>
@@ -879,7 +951,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </button>
 
                 {openFaqHowToUse && (
-                  <div className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
+                  <div id="faq-how-to-use" className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
                     Najpierw wybierz model wag. Następnie ustaw natężenie problemów. Wynik zostanie obliczony automatycznie w skali od 0 do 10.
                   </div>
                 )}
@@ -890,6 +962,8 @@ export const DeprivationCalculator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenFaqWhyIndicators(!openFaqWhyIndicators)}
+                  aria-expanded={openFaqWhyIndicators}
+                  aria-controls={openFaqWhyIndicators ? 'faq-why-indicators' : undefined}
                   className="w-full p-4 text-left font-extrabold text-slate-900 text-sm flex items-center justify-between bg-[#EBF1F5]/60 hover:bg-[#EBF1F5] transition-colors cursor-pointer"
                 >
                   <span>PO CO STOSUJE SIĘ TAKIE WSKAŹNIKI?</span>
@@ -897,7 +971,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </button>
 
                 {openFaqWhyIndicators && (
-                  <div className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
+                  <div id="faq-why-indicators" className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
                     Wskaźniki syntetyczne ułatwiają porównywanie wielu części miasta. Pomagają wskazać miejsca, w których kilka problemów społecznych występuje jednocześnie.
                   </div>
                 )}
@@ -908,6 +982,8 @@ export const DeprivationCalculator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenFaqWhatNotMeans(!openFaqWhatNotMeans)}
+                  aria-expanded={openFaqWhatNotMeans}
+                  aria-controls={openFaqWhatNotMeans ? 'faq-what-not-means' : undefined}
                   className="w-full p-4 text-left font-extrabold text-slate-900 text-sm flex items-center justify-between bg-[#EBF1F5]/60 hover:bg-[#EBF1F5] transition-colors cursor-pointer"
                 >
                   <span>CZEGO WYNIK NIE OZNACZA?</span>
@@ -915,7 +991,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </button>
 
                 {openFaqWhatNotMeans && (
-                  <div className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
+                  <div id="faq-what-not-means" className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
                     Wynik nie opisuje pojedynczego mieszkańca. Nie oznacza także automatycznego wyznaczenia obszaru rewitalizacji ani przyznania środków finansowych.
                   </div>
                 )}
@@ -926,6 +1002,8 @@ export const DeprivationCalculator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenFaqWhyDifferentWeights(!openFaqWhyDifferentWeights)}
+                  aria-expanded={openFaqWhyDifferentWeights}
+                  aria-controls={openFaqWhyDifferentWeights ? 'faq-why-different-weights' : undefined}
                   className="w-full p-4 text-left font-extrabold text-slate-900 text-sm flex items-center justify-between bg-[#EBF1F5]/60 hover:bg-[#EBF1F5] transition-colors cursor-pointer"
                 >
                   <span>DLACZEGO MODELE MAJĄ RÓŻNE WAGI?</span>
@@ -933,7 +1011,7 @@ export const DeprivationCalculator: React.FC = () => {
                 </button>
 
                 {openFaqWhyDifferentWeights && (
-                  <div className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
+                  <div id="faq-why-different-weights" className="p-4 bg-white text-xs text-slate-700 leading-relaxed border-t border-slate-200">
                     Samorządy mogą inaczej oceniać znaczenie poszczególnych problemów. W jednym modelu większy wpływ mają ubóstwo i bezrobocie, a w innym wszystkie problemy są traktowane bardziej równomiernie.
                   </div>
                 )}
@@ -946,11 +1024,14 @@ export const DeprivationCalculator: React.FC = () => {
       {/* 12. MODAL "DOKUMENT I METODOLOGIA" */}
       {detailCity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1E2A34]/80 backdrop-blur-xs animate-in fade-in duration-200">
-          <div 
+          <div
+            ref={dialogRef}
             className="bg-white rounded-none max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-[#4A6B82] p-6 space-y-5 relative"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
+            aria-describedby="modal-disclaimer"
+            tabIndex={-1}
           >
             {/* Modal Header */}
             <div className="flex items-start justify-between border-b border-slate-200 pb-3">
@@ -973,7 +1054,7 @@ export const DeprivationCalculator: React.FC = () => {
             </div>
 
             {/* Prominent Disclaimer Banner */}
-            <div className="p-3 bg-[#FFFDF0] border-l-4 border-[#F4D03F] rounded-none text-xs font-bold text-slate-900 flex items-start gap-2.5">
+            <div id="modal-disclaimer" className="p-3 bg-[#FFFDF0] border-l-4 border-[#F4D03F] rounded-none text-xs font-bold text-slate-900 flex items-start gap-2.5">
               <Info className="w-4 h-4 text-[#D4B020] shrink-0 mt-0.5" />
               <p className="leading-snug">
                 Dokument jest źródłem modelu liczenia, a nie aktualnych wartości na suwakach.
